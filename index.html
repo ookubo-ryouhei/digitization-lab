@@ -1,1 +1,660 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>デジタル化ラボ ｜ 情報Ⅰ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+/* ===== テーマ（色・フォント）：ここを変えれば全体の見た目が変わります ===== */
+:root{
+  --paper:#f3efe6;            /* 背景（紙） */
+  --ink:#1c1b19;             /* 文字（インク） */
+  --ink-soft:#5b574d;        /* 補助文字 */
+  --accent:#e5483d;          /* メインアクセント（朱） */
+  --accent-2:#1aa39b;        /* サブアクセント（信号の青緑） */
+  --gold:#f0b429;
+  --screen:#13161d;          /* スクリーン（暗い画面） */
+  --screen-2:#0b0d12;
+  --line:#d8d1c2;            /* 罫線 */
+  --card:#ffffff;
+  --pixel-font:"DotGothic16","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+  --body-font:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  --mono-font:ui-monospace,"SFMono-Regular","Menlo","Consolas",monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--body-font);
+  color:var(--ink);
+  background:var(--paper);
+  background-image:radial-gradient(var(--line) 1px,transparent 1px);
+  background-size:18px 18px;
+  line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 60px;}
+
+/* ===== ヘッダー ===== */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px;border-bottom:3px solid var(--ink);padding-bottom:12px;}
+h1{font-family:var(--pixel-font);font-size:clamp(22px,4.6vw,38px);margin:0;letter-spacing:1px;line-height:1.1;}
+h1 .sq{color:var(--accent);}
+.sub{font-size:13px;color:var(--ink-soft);margin-top:4px;}
+.tag{font-family:var(--pixel-font);font-size:11px;background:var(--ink);color:var(--paper);padding:4px 9px;border-radius:2px;align-self:center;white-space:nowrap;}
+
+/* ===== レイアウト ===== */
+.grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:18px;}
+@media(max-width:820px){.grid{grid-template-columns:1fr;}}
+
+/* ===== スクリーン（生成動画） ===== */
+.screen-box{background:var(--screen);border-radius:10px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 0 0 1px rgba(255,255,255,.05);position:relative;}
+.screen-head{display:flex;align-items:center;justify-content:space-between;color:#aeb6c2;font-family:var(--pixel-font);font-size:11px;padding:2px 4px 8px;}
+.rec{display:flex;align-items:center;gap:6px;}
+.rec .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:blink 1.4s infinite;}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.25}}
+canvas#screen{width:100%;aspect-ratio:16/9;display:block;background:#000;border-radius:6px;image-rendering:pixelated;}
+.size-badge{position:absolute;right:16px;bottom:16px;background:rgba(10,12,18,.78);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(4px);color:#fff;border-radius:8px;padding:7px 11px;font-family:var(--mono-font);}
+.size-badge .lab{font-size:10px;color:#9aa3b2;letter-spacing:1px;}
+.size-badge .val{font-size:clamp(18px,3vw,24px);font-weight:700;color:var(--gold);}
+.player-ctrl{position:absolute;left:16px;bottom:16px;display:flex;gap:6px;background:rgba(10,12,18,.78);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(4px);border-radius:10px;padding:5px;}
+.pc-btn{width:40px;height:40px;border-radius:8px;border:none;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.55);background:transparent;transition:background .15s ease,color .15s ease;-webkit-appearance:none;}
+.pc-btn.active{background:var(--accent);color:#fff;}
+.pc-btn:active{transform:translateY(1px);}
+
+/* ===== 波形パネル ===== */
+.wave-box{background:var(--screen-2);border-radius:10px;padding:10px 12px;margin-top:14px;}
+.wave-box .ttl{font-family:var(--pixel-font);font-size:11px;color:#7fd6d0;letter-spacing:1px;display:flex;justify-content:space-between;}
+canvas#wave{width:100%;height:120px;display:block;margin-top:6px;}
+.wave-note{font-size:11px;color:#7b8696;margin-top:4px;}
+
+/* ===== コントロール ===== */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 14px 6px;}
+.item{padding:11px 2px 13px;border-bottom:1px dashed var(--line);}
+.item:last-child{border-bottom:none;}
+.item-head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;}
+.item-name{font-family:var(--pixel-font);font-size:14px;}
+.item-name .num{color:var(--accent);margin-right:4px;}
+.item-concept{font-size:11px;color:var(--ink-soft);}
+.btns{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{flex:1 1 0;min-width:84px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);
+  padding:9px 6px;border-radius:7px;font-family:var(--body-font);font-size:13px;font-weight:600;cursor:pointer;
+  transition:transform .08s ease,background .12s ease;text-align:center;}
+.btn small{display:block;font-weight:400;font-size:10px;color:var(--ink-soft);margin-top:2px;}
+.btn:active{transform:translateY(1px);}
+.btn.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 0 #a8332b;transform:translateY(-1px);}
+.btn.on small{color:rgba(255,255,255,.85);}
+.text-row input{width:100%;border:1.5px solid var(--ink);border-radius:7px;padding:9px 10px;font-size:18px;font-family:var(--body-font);letter-spacing:4px;background:#fffdf7;}
+.text-row input:focus{outline:2px solid var(--accent-2);outline-offset:1px;}
+
+/* ===== データ量内訳 ===== */
+.calc{background:#fffdf7;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px;}
+.calc h3{font-family:var(--pixel-font);font-size:13px;margin:0 0 8px;}
+.calc table{width:100%;border-collapse:collapse;font-family:var(--mono-font);font-size:12px;}
+.calc td{padding:5px 2px;vertical-align:top;border-bottom:1px dotted var(--line);}
+.calc td.k{color:var(--ink-soft);white-space:nowrap;width:56px;}
+.calc td.v{text-align:right;font-weight:700;white-space:nowrap;}
+.calc .total td{border-top:2px solid var(--ink);border-bottom:none;padding-top:8px;font-size:14px;}
+.calc .total .v{color:var(--accent);}
+.toolbar{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.tool{border:none;border-radius:8px;padding:11px 14px;font-family:var(--pixel-font);font-size:13px;cursor:pointer;flex:1 1 0;min-width:130px;}
+.tool.play{background:var(--accent-2);color:#fff;box-shadow:0 4px 0 #137a73;}
+.tool.reset{background:var(--ink);color:var(--paper);box-shadow:0 4px 0 #000;}
+.tool:active{transform:translateY(2px);box-shadow:none;}
+.hint{font-size:11px;color:var(--ink-soft);margin-top:10px;line-height:1.5;}
+footer{margin-top:26px;text-align:center;font-size:11px;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>デジタル<span class="sq">＿</span>化ラボ</h1>
+      <div class="sub">音・画像・色・コマ数・文字を選ぶと、その設定で動画が作られ「データ量」が分かります。</div>
+    </div>
+    <div class="tag">情報Ⅰ / 標本化・量子化・符号化</div>
+  </header>
+
+  <div class="grid">
+    <!-- 左：スクリーン＋波形 -->
+    <section>
+      <div class="screen-box">
+        <div class="screen-head">
+          <span class="rec"><span class="dot"></span>GENERATING…</span>
+          <span id="specLine">480p / フルカラー / 35コマ / 32kHz</span>
+        </div>
+        <canvas id="screen" width="854" height="480"></canvas>
+        <div class="size-badge">
+          <div class="lab">この設定のデータ量</div>
+          <div class="val" id="badgeSize">―</div>
+        </div>
+        <div class="player-ctrl">
+          <button class="pc-btn active" id="playBtn" aria-label="再生">▶</button>
+          <button class="pc-btn" id="stopBtn" aria-label="一時停止">⏸</button>
+        </div>
+      </div>
+
+      <div class="wave-box">
+        <div class="ttl"><span>音の標本化（波形と標本点）</span><span id="waveCount">―</span></div>
+        <canvas id="wave" width="700" height="120"></canvas>
+        <div class="wave-note">横方向＝標本化（周波数が高いほど点が多い）／縦方向＝量子化（ビット数が多いほど段階が細かい）。</div>
+      </div>
+    </section>
+
+    <!-- 右：操作＋計算 -->
+    <section>
+      <div class="panel" id="controls"></div>
+
+      <div class="calc">
+        <h3>📐 データ量の内訳（計算式）</h3>
+        <table id="calcTable"></table>
+      </div>
+
+      <div class="toolbar">
+        <button class="tool reset" id="resetBtn">⟳ 最高品質に戻す</button>
+      </div>
+      <div class="hint">※ iPad では最初に画面のどこかをタップすると音が出ます（映像は自動再生）。スクリーンをタップすると音を聴き直せます。<br>※ 音はモノラルで計算。ビット数を下げると「量子化ノイズ」が聴こえます。</div>
+    </section>
+  </div>
+
+  <footer>情報Ⅰ 教材プロトタイプ ／ すべてブラウザ内で生成（保存ファイルなし）</footer>
+</div>
+
+<script>
+/* =========================================================================
+   CONFIG ：先生が編集する場所はここだけでOK。選択肢の増減・数値変更が可能。
+   ========================================================================= */
+const CONFIG = {
+  durationSec: 4,                 // 動画の長さ（秒）
+  audio: { channels: 1 }, // モノラル（データ量計算用）
+  text: { perCharBits: 16, maxChars: 4, defaultText: "デジタル" }, // 全角=16bit
+
+  subjects: [
+    { id:"shapes",    label:"図形アニメ" },
+    { id:"photo",     label:"写真(夕焼け)" },
+    { id:"dotart",    label:"ドット絵" },
+    { id:"fireworks", label:"花火" },
+    { id:"ocean",     label:"海" },
+    { id:"stars",     label:"星空" },
+  ],
+  resolutions: [
+    { id:"144p", label:"144p", sub:"256×144", w:256, h:144 },
+    { id:"360p", label:"360p", sub:"640×360", w:640, h:360 },
+    { id:"480p", label:"480p", sub:"854×480", w:854, h:480 },
+  ],
+  colors: [
+    { id:"bw",   label:"2値",         sub:"1bit",  bits:1 },
+    { id:"gray", label:"モノクロ256", sub:"8bit",  bits:8 },
+    { id:"full", label:"フルカラー",  sub:"24bit", bits:24 },
+  ],
+  rates: [
+    { id:"r8",  label:"8kHz",     sub:"低音質",  hz:8000 },
+    { id:"r22", label:"22.05kHz", sub:"標準",    hz:22050 },
+    { id:"r32", label:"32kHz",    sub:"高音質",  hz:32000 },
+  ],
+  quants: [
+    { id:"q4",  label:"4bit",  sub:"ノイズ多", bits:4 },
+    { id:"q8",  label:"8bit",  sub:"標準",     bits:8 },
+    { id:"q16", label:"16bit", sub:"CD音質",   bits:16 },
+  ],
+  framerates: [
+    { id:"f5",  label:"5コマ",  sub:"カクカク", fps:5 },
+    { id:"f15", label:"15コマ", sub:"ふつう",   fps:15 },
+    { id:"f35", label:"35コマ", sub:"なめらか", fps:35 },
+  ],
+};
+
+// 各項目の定義（ここに1行足せば項目が増える＝拡張しやすい構造）
+const ITEMS = [
+  { key:"subject", name:"題材",       concept:"何を表示するか",       options:CONFIG.subjects,    pick:"id" },
+  { key:"res",     name:"画像データ", concept:"解像度＝空間の標本化", options:CONFIG.resolutions, pick:"id" },
+  { key:"color",   name:"色データ",   concept:"色深度＝量子化",       options:CONFIG.colors,      pick:"id" },
+  { key:"rate",    name:"音データ(周波数)", concept:"サンプリング周波数＝時間の標本化", options:CONFIG.rates,  pick:"id" },
+  { key:"quant",   name:"音データ(ビット数)", concept:"量子化ビット数＝音の量子化",      options:CONFIG.quants, pick:"id" },
+  { key:"fps",     name:"コマ数",     concept:"時間の標本化（動画）", options:CONFIG.framerates,  pick:"id" },
+];
+
+/* =========================================================================
+   状態（state）。初期値は「全部最高品質」＝お手本。
+   ========================================================================= */
+const state = {
+  subject: CONFIG.subjects[0].id,         // 図形アニメ
+  res:     CONFIG.resolutions[2].id,      // 480p
+  color:   CONFIG.colors[2].id,           // フルカラー
+  rate:    CONFIG.rates[2].id,            // 32kHz
+  quant:   CONFIG.quants[2].id,           // 16bit
+  fps:     CONFIG.framerates[2].id,       // 35コマ
+  text:    CONFIG.text.defaultText,
+};
+function opt(arr,id){ return arr.find(o=>o.id===id); }
+const sel = {
+  get subject(){ return opt(CONFIG.subjects,state.subject); },
+  get res(){ return opt(CONFIG.resolutions,state.res); },
+  get color(){ return opt(CONFIG.colors,state.color); },
+  get rate(){ return opt(CONFIG.rates,state.rate); },
+  get quant(){ return opt(CONFIG.quants,state.quant); },
+  get fps(){ return opt(CONFIG.framerates,state.fps); },
+};
+
+/* =========================================================================
+   UI生成（ボタン・文字入力）
+   ========================================================================= */
+const controls = document.getElementById("controls");
+function buildControls(){
+  controls.innerHTML = "";
+  ITEMS.forEach((item,idx)=>{
+    const wrap = document.createElement("div");
+    wrap.className = "item";
+    wrap.innerHTML =
+      `<div class="item-head"><span class="item-name"><span class="num">${idx+1}.</span>${item.name}</span>`+
+      `<span class="item-concept">${item.concept}</span></div>`;
+    const btns = document.createElement("div");
+    btns.className = "btns";
+    item.options.forEach(o=>{
+      const b = document.createElement("button");
+      b.className = "btn" + (state[item.key]===o.id ? " on" : "");
+      b.innerHTML = o.label + (o.sub?`<small>${o.sub}</small>`:"");
+      b.onclick = ()=>{
+        state[item.key] = o.id;
+        buildControls();          // 選択状態を反映
+        onChange(item.key);
+      };
+      btns.appendChild(b);
+    });
+    wrap.appendChild(btns);
+    controls.appendChild(wrap);
+  });
+  // 文字データ（入力欄）
+  const t = document.createElement("div");
+  t.className = "item text-row";
+  t.innerHTML = `<div class="item-head"><span class="item-name"><span class="num">${ITEMS.length+1}.</span>文字データ</span>`+
+                `<span class="item-concept">符号化（1文字=${CONFIG.text.perCharBits}bit）</span></div>`;
+  const inp = document.createElement("input");
+  inp.type="text"; inp.maxLength=CONFIG.text.maxChars; inp.value=state.text;
+  inp.placeholder="4文字まで";
+  inp.oninput = ()=>{ state.text = inp.value.slice(0,CONFIG.text.maxChars); updateCalc(); if(!playing) renderFrame(sceneT); };
+  t.appendChild(inp);
+  controls.appendChild(t);
+}
+
+function onChange(key){
+  updateSpecLine();
+  updateCalc();
+  if(key==="rate"||key==="quant") drawWave();
+  if(!playing){
+    renderFrame(sceneT);                       // 停止中も「画面の見た目」は新設定で更新
+  } else if(key==="rate"||key==="quant"){
+    playAudio(sceneT);                         // 再生中の音設定変更は即時に音へ反映
+  }
+}
+
+/* =========================================================================
+   データ量の計算と表示
+   ========================================================================= */
+function fmtBytes(b){
+  if(b < 1024) return b.toFixed(0)+" B";
+  if(b < 1024*1024) return (b/1024).toFixed(1)+" KB";
+  if(b < 1024*1024*1024) return (b/1024/1024).toFixed(1)+" MB";
+  return (b/1024/1024/1024).toFixed(2)+" GB";
+}
+function calc(){
+  const w=sel.res.w, h=sel.res.h, cb=sel.color.bits, fps=sel.fps.fps, dur=CONFIG.durationSec;
+  const qb=sel.quant.bits;
+  const perFrameBytes = (w*h*cb)/8;
+  const videoBytes = perFrameBytes*fps*dur;
+  const audioBytes = (sel.rate.hz*qb*dur)/8;
+  const chars = state.text.length;
+  const textBytes = (chars*CONFIG.text.perCharBits)/8;
+  const total = videoBytes+audioBytes+textBytes;
+  return {w,h,cb,fps,dur,qb,perFrameBytes,videoBytes,audioBytes,chars,textBytes,total};
+}
+function updateCalc(){
+  const c = calc();
+  document.getElementById("calcTable").innerHTML =
+    `<tr><td class="k">画像1枚</td><td>${c.w}×${c.h}×${c.cb}bit ÷8</td><td class="v">${fmtBytes(c.perFrameBytes)}</td></tr>`+
+    `<tr><td class="k">動画</td><td>1枚 ×${c.fps}コマ ×${c.dur}秒</td><td class="v">${fmtBytes(c.videoBytes)}</td></tr>`+
+    `<tr><td class="k">音</td><td>${(sel.rate.hz/1000)}k ×${c.qb}bit ×${c.dur}秒 ÷8</td><td class="v">${fmtBytes(c.audioBytes)}</td></tr>`+
+    `<tr><td class="k">文字</td><td>${c.chars}文字 ×${CONFIG.text.perCharBits}bit ÷8</td><td class="v">${fmtBytes(c.textBytes)}</td></tr>`+
+    `<tr class="total"><td class="k">合計</td><td>映像＋音＋文字</td><td class="v">${fmtBytes(c.total)}</td></tr>`;
+  document.getElementById("badgeSize").textContent = fmtBytes(c.total);
+}
+function updateSpecLine(){
+  document.getElementById("specLine").textContent =
+    `${sel.res.label} / ${sel.color.label} / ${sel.fps.label} / ${sel.rate.label}・${sel.quant.label}`;
+}
+
+/* =========================================================================
+   映像生成：低解像度オフスクリーン→色変換→拡大描画（ニアレスト）
+   ========================================================================= */
+const screen = document.getElementById("screen");
+const sctx = screen.getContext("2d");
+const off = document.createElement("canvas");
+const offCtx = off.getContext("2d", { willReadFrequently:true });
+
+// --- 題材：図形アニメ ---
+function subjShapes(ctx,w,h,t){
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,"#2b3a67"); g.addColorStop(1,"#101522");
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  // 横切る帯（コマ数の差が分かりやすい速い動き）
+  ctx.fillStyle="#1aa39b";
+  const bx=((t*0.45)%1)*(w+40)-20; ctx.fillRect(bx,0,16,h);
+  // 中央で回転する四角
+  ctx.save(); ctx.translate(w*0.5,h*0.5); ctx.rotate(t*2.2);
+  const s=Math.min(w,h)*0.20; ctx.fillStyle="#e5483d"; ctx.fillRect(-s/2,-s/2,s,s); ctx.restore();
+  // 周回する円
+  const cx=w*0.5+Math.cos(t*1.6)*w*0.30, cy=h*0.5+Math.sin(t*1.6)*h*0.30;
+  ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)*0.11,0,Math.PI*2); ctx.fillStyle="#f0b429"; ctx.fill();
+}
+// --- 題材：写真（手描きの夕焼け：なめらかなグラデで色深度の差が出る）---
+function hill(ctx,w,h,baseR,amp,phase){
+  ctx.beginPath(); ctx.moveTo(0,h);
+  for(let x=0;x<=w;x+=Math.max(2,w/60)){
+    const y=h*baseR + Math.sin(x/w*Math.PI*2+phase)*h*amp;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(w,h); ctx.closePath(); ctx.fill();
+}
+function subjPhoto(ctx,w,h,t){
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,"#1b2a6b"); g.addColorStop(0.42,"#7b3f8f");
+  g.addColorStop(0.72,"#e8623b"); g.addColorStop(1,"#ffd56b");
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  const sunY=h*0.58-Math.sin(t*0.6)*h*0.05;
+  const sg=ctx.createRadialGradient(w*0.5,sunY,0,w*0.5,sunY,h*0.34);
+  sg.addColorStop(0,"#fff6d0"); sg.addColorStop(0.4,"#ffd56b"); sg.addColorStop(1,"rgba(255,213,107,0)");
+  ctx.fillStyle=sg; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle="#3a2350"; hill(ctx,w,h,0.74,0.05,t*0.3);
+  ctx.fillStyle="#241634"; hill(ctx,w,h,0.84,0.04,t*0.3+10);
+}
+// --- 題材：ドット絵（汎用ピクセルスプライト）---
+const SPRITE = [
+ "..R.....R..",
+ "...R...R...",
+ "..YYYYYYY..",
+ ".YY.YYY.YY.",
+ "YYYYYYYYYYY",
+ "Y.YYYYYYY.Y",
+ "Y.Y.....Y.Y",
+ "...GG.GG...",
+];
+const PAL={ Y:"#5ddf6e", R:"#ff5a5a", G:"#ffd23f" };
+function subjDot(ctx,w,h,t){
+  ctx.fillStyle="#0b1020"; ctx.fillRect(0,0,w,h);
+  const cols=SPRITE[0].length, rows=SPRITE.length;
+  const px=Math.max(1,Math.floor(Math.min(w/(cols+2), h/(rows+2))));
+  const ox=Math.floor((w-px*cols)/2);
+  const bob=Math.round(Math.sin(t*4)*px); // 上下に跳ねる→コマ数の差が出る
+  const oy=Math.floor((h-px*rows)/2)+bob;
+  for(let r=0;r<rows;r++){
+    for(let cI=0;cI<cols;cI++){
+      const ch=SPRITE[r][cI];
+      if(PAL[ch]){ ctx.fillStyle=PAL[ch]; ctx.fillRect(ox+cI*px, oy+r*px, px, px); }
+    }
+  }
+}
+// --- 題材：花火（粒子の動きでコマ数の差／明暗で色深度の差が出る）---
+function subjFireworks(ctx,w,h,t){
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,"#05060f"); g.addColorStop(1,"#0e1430");
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  const bursts=[
+    {t0:0.2,x:0.30,y:0.34,c:"#ff5a5a"},{t0:1.0,x:0.66,y:0.30,c:"#f0b429"},
+    {t0:1.8,x:0.45,y:0.46,c:"#5ddf6e"},{t0:2.5,x:0.72,y:0.40,c:"#6db3ff"},
+    {t0:3.2,x:0.36,y:0.32,c:"#ff9ed8"},
+  ];
+  const N=26, sp=Math.min(w,h)*0.34;
+  bursts.forEach(b=>{
+    const age=t-b.t0; if(age<0||age>1.4) return;
+    const cx=b.x*w, cy=b.y*h, a=Math.max(0,1-age/1.4);
+    for(let i=0;i<N;i++){
+      const ang=i/N*Math.PI*2, r=sp*age;
+      const px=cx+Math.cos(ang)*r, py=cy+Math.sin(ang)*r+age*age*h*0.18;
+      ctx.globalAlpha=a; ctx.fillStyle=b.c;
+      const rad=Math.max(1,Math.min(w,h)*0.012*a+0.6);
+      ctx.beginPath(); ctx.arc(px,py,rad,0,Math.PI*2); ctx.fill();
+    }
+  });
+  ctx.globalAlpha=1;
+}
+// --- 題材：海（なめらかなグラデ＋うねる波）---
+function subjOcean(ctx,w,h,t){
+  const sky=ctx.createLinearGradient(0,0,0,h*0.55);
+  sky.addColorStop(0,"#0a1a3a"); sky.addColorStop(1,"#f6a25c");
+  ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.55);
+  ctx.fillStyle="#ffd56b";
+  ctx.beginPath(); ctx.arc(w*0.5,h*0.48,Math.min(w,h)*0.10,0,Math.PI*2); ctx.fill();
+  const sea=ctx.createLinearGradient(0,h*0.55,0,h);
+  sea.addColorStop(0,"#1b6e8c"); sea.addColorStop(1,"#06314a");
+  ctx.fillStyle=sea; ctx.fillRect(0,h*0.55,w,h*0.45);
+  ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.lineWidth=Math.max(1,h*0.006);
+  for(let k=0;k<5;k++){
+    const yBase=h*0.6+k*h*0.08;
+    ctx.beginPath();
+    for(let x=0;x<=w;x+=Math.max(2,w/80)){
+      const y=yBase+Math.sin(x/w*Math.PI*4 + t*2 + k)*h*0.012;
+      (x===0)?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+}
+// --- 題材：星空（流れ星が速く動く＝コマ数の差が出る）---
+function subjStars(ctx,w,h,t){
+  ctx.fillStyle="#04060f"; ctx.fillRect(0,0,w,h);
+  for(let i=0;i<60;i++){
+    const sx=((i*73)%100)/100*w, sy=((i*149)%100)/100*h;
+    const tw=0.5+0.5*Math.sin(t*3+i);
+    ctx.globalAlpha=0.3+0.7*tw; ctx.fillStyle="#fff";
+    const r=Math.max(0.5,Math.min(w,h)*0.004); ctx.fillRect(sx,sy,r,r);
+  }
+  ctx.globalAlpha=1;
+  ctx.fillStyle="#e9e6d0"; ctx.beginPath(); ctx.arc(w*0.72,h*0.28,Math.min(w,h)*0.10,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#04060f"; ctx.beginPath(); ctx.arc(w*0.66,h*0.24,Math.min(w,h)*0.09,0,Math.PI*2); ctx.fill();
+  const p=t/CONFIG.durationSec, ssx=p*w*1.3-w*0.15, ssy=h*0.2+p*h*0.2;
+  ctx.strokeStyle="rgba(255,255,255,.85)"; ctx.lineWidth=Math.max(1,h*0.006);
+  ctx.beginPath(); ctx.moveTo(ssx,ssy); ctx.lineTo(ssx-w*0.08,ssy-h*0.04); ctx.stroke();
+}
+// --- 字幕（低解像度キャンバスに描く＝解像度・色数の影響を受ける）---
+function drawCaption(ctx,w,h){
+  const txt=(state.text||"").slice(0,CONFIG.text.maxChars);
+  if(!txt) return;
+  const fs=Math.round(h*0.16);
+  ctx.save();
+  ctx.font=`bold ${fs}px sans-serif`;
+  ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.lineJoin="round"; ctx.lineWidth=Math.max(2,fs*0.14); ctx.strokeStyle="rgba(0,0,0,.75)";
+  ctx.fillStyle="#ffffff";
+  const y=h-Math.round(h*0.07);
+  ctx.strokeText(txt,w/2,y); ctx.fillText(txt,w/2,y);
+  ctx.restore();
+}
+// --- 色変換（量子化：フルカラー/グレースケール/2値）---
+function applyColor(ctx,w,h,bits){
+  if(bits>=24) return;                  // フルカラーは何もしない
+  const img=ctx.getImageData(0,0,w,h), d=img.data;
+  for(let i=0;i<d.length;i+=4){
+    const lum=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    const v = (bits===1) ? (lum>=128?255:0) : lum;  // 2値 or 256階調
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(img,0,0);
+}
+function renderFrame(t){
+  const r=sel.res, w=r.w, h=r.h;
+  if(off.width!==w||off.height!==h){ off.width=w; off.height=h; }
+  const id=sel.subject.id;
+  if(id==="shapes") subjShapes(offCtx,w,h,t);
+  else if(id==="photo") subjPhoto(offCtx,w,h,t);
+  else if(id==="fireworks") subjFireworks(offCtx,w,h,t);
+  else if(id==="ocean") subjOcean(offCtx,w,h,t);
+  else if(id==="stars") subjStars(offCtx,w,h,t);
+  else subjDot(offCtx,w,h,t);
+  drawCaption(offCtx,w,h);
+  applyColor(offCtx,w,h,sel.color.bits);
+  sctx.imageSmoothingEnabled=false;
+  sctx.clearRect(0,0,screen.width,screen.height);
+  sctx.drawImage(off,0,0,w,h,0,0,screen.width,screen.height);
+}
+
+/* ===== 再生制御＝コマ数でアニメ／一時停止／4秒で自動停止 ===== */
+let playing=false, lastDraw=0, sceneT=0;
+function loop(now){
+  if(!playing) return;
+  const fps=sel.fps.fps, interval=1000/fps;
+  if(now-lastDraw>=interval){
+    lastDraw=now;
+    renderFrame(sceneT);
+    sceneT += 1/fps;
+    if(sceneT >= CONFIG.durationSec){            // 4秒経ったら自動停止
+      playing=false; stopAudioPlayback(); updatePlayUI();
+      return;
+    }
+  }
+  requestAnimationFrame(loop);
+}
+function startPlayback(){
+  if(playing) return;
+  if(sceneT >= CONFIG.durationSec) sceneT = 0;   // 終端まで行ったあとは最初から
+  playing=true; lastDraw=0;
+  updatePlayUI();
+  playAudio(sceneT);                             // 一時停止からの再開にも対応（続きから）
+  requestAnimationFrame(loop);
+}
+function pausePlayback(){
+  if(!playing) return;
+  playing=false;
+  stopAudioPlayback();
+  updatePlayUI();
+}
+function updatePlayUI(){
+  document.getElementById("playBtn").classList.toggle("active", !playing);
+  document.getElementById("stopBtn").classList.toggle("active",  playing);
+}
+
+/* =========================================================================
+   音の生成（加算合成・ナイキスト未満の倍音だけ＝折り返し雑音なし）
+   ========================================================================= */
+let ac=null, srcNode=null, audioEnabled=false;
+const MELODY=[523,659,784,1047,988,784,659,523]; // ド ミ ソ 高ド … （高い音ほど倍音が落ちて差が出る）
+function quantize(v,bits){               // 振幅を 2^bits 段階に量子化
+  const L=Math.pow(2,bits);
+  const q=Math.round((v+1)/2*(L-1))/(L-1);
+  return q*2-1;
+}
+// ネイティブレートで生成（iOSで低レートのcreateBufferが失敗する問題を回避）。
+// 音質差はナイキスト未満の倍音だけ＋量子化で再現（折り返し雑音は出ない）。
+function buildAudioBuffer(ctx){
+  const dur=CONFIG.durationSec, nat=ctx.sampleRate, len=Math.floor(nat*dur);
+  const buf=ctx.createBuffer(1,len,nat), data=buf.getChannelData(0);
+  const beat=dur/MELODY.length, nyq=sel.rate.hz/2, qb=sel.quant.bits;
+  for(let i=0;i<len;i++){
+    const time=i/nat;
+    const ni=Math.min(MELODY.length-1,Math.floor(time/beat));
+    const f0=MELODY[ni], lt=time-ni*beat;
+    const env=Math.min(1,lt*40)*Math.exp(-lt*3.2);  // 立ち上がり＋減衰
+    let s=0;
+    for(let hI=1;hI<=14;hI++){               // ナイキスト未満の倍音のみ→低レートはこもる
+      const fh=f0*hI; if(fh<nyq){ s+=(1/hI)*Math.sin(2*Math.PI*fh*time); }
+    }
+    data[i]=quantize(s*0.16*env, qb);        // 量子化（ビット数が小さいほどノイズ）
+  }
+  return buf;
+}
+async function ensureAudio(){
+  if(!ac){ ac=new (window.AudioContext||window.webkitAudioContext)(); }
+  if(ac.state==="suspended"){ try{ await ac.resume(); }catch(e){} }
+  audioEnabled=true;
+}
+async function playAudio(offset=0){
+  await ensureAudio();
+  if(!playing) return;            // 準備中に停止された場合は何もしない
+  stopAudioPlayback();
+  const buf=buildAudioBuffer(ac);
+  srcNode=ac.createBufferSource(); srcNode.buffer=buf;
+  const gain=ac.createGain(); gain.gain.value=0.9;
+  srcNode.connect(gain).connect(ac.destination);
+  const off=Math.max(0,Math.min(offset, CONFIG.durationSec-0.001));
+  srcNode.start(0, off);
+}
+function stopAudioPlayback(){
+  if(srcNode){ try{srcNode.stop();}catch(e){} srcNode=null; }
+}
+
+/* ===== 波形＋標本点の図 ===== */
+const wave=document.getElementById("wave"), wctx=wave.getContext("2d");
+function drawWave(){
+  const W=wave.width, H=wave.height, pad=14, mid=H/2;
+  wctx.clearRect(0,0,W,H);
+  // 目盛り
+  wctx.strokeStyle="rgba(255,255,255,.08)"; wctx.lineWidth=1;
+  wctx.beginPath(); wctx.moveTo(0,mid); wctx.lineTo(W,mid); wctx.stroke();
+  const rate=sel.rate.hz, windowSec=0.002, freq=1000, amp=H*0.38, qb=sel.quant.bits;
+  // 量子化レベルの横線（段階が少ないとき＝4bit以下のみ描画）
+  if(qb<=4){
+    const L=Math.pow(2,qb);
+    wctx.strokeStyle="rgba(240,180,41,.18)"; wctx.lineWidth=1;
+    for(let k=0;k<L;k++){
+      const lv=k/(L-1)*2-1, y=mid-lv*amp;
+      wctx.beginPath(); wctx.moveTo(0,y); wctx.lineTo(W,y); wctx.stroke();
+    }
+  }
+  // 元の連続波（うすい線）
+  wctx.strokeStyle="rgba(127,214,208,.35)"; wctx.lineWidth=1.5; wctx.beginPath();
+  for(let x=pad;x<=W-pad;x++){
+    const tt=((x-pad)/(W-2*pad))*windowSec;
+    const y=mid-Math.sin(2*Math.PI*freq*tt)*amp;
+    (x===pad)?wctx.moveTo(x,y):wctx.lineTo(x,y);
+  }
+  wctx.stroke();
+  // 標本点（時間方向に標本化＋振幅方向に量子化）
+  const n=Math.floor(windowSec*rate)+1;
+  const xAt=tt=> pad + (tt/windowSec)*(W-2*pad);
+  const yAt=tt=> mid - quantize(Math.sin(2*Math.PI*freq*tt),qb)*amp;
+  wctx.strokeStyle="rgba(26,163,155,.6)"; wctx.lineWidth=1.5; wctx.beginPath();
+  let prevX=null,prevY=null;
+  for(let i=0;i<n;i++){
+    const tt=i/rate; if(tt>windowSec) break;
+    const x=xAt(tt), y=yAt(tt);
+    if(prevX!==null){ wctx.moveTo(prevX,prevY); wctx.lineTo(x,prevY); wctx.lineTo(x,y); }
+    prevX=x; prevY=y;
+  }
+  wctx.stroke();
+  for(let i=0;i<n;i++){
+    const tt=i/rate; if(tt>windowSec) break;
+    wctx.beginPath(); wctx.arc(xAt(tt),yAt(tt),3,0,Math.PI*2);
+    wctx.fillStyle="#f0b429"; wctx.fill();
+  }
+  document.getElementById("waveCount").textContent = `${sel.rate.label}=${n}点 / ${sel.quant.label}=${Math.pow(2,qb)}段階`;
+}
+
+/* =========================================================================
+   起動
+   ========================================================================= */
+function reset(){
+  state.subject=CONFIG.subjects[0].id;
+  state.res=CONFIG.resolutions[2].id;
+  state.color=CONFIG.colors[2].id;
+  state.rate=CONFIG.rates[2].id;
+  state.quant=CONFIG.quants[2].id;
+  state.fps=CONFIG.framerates[2].id;
+  pausePlayback();
+  sceneT=0;
+  buildControls(); updateSpecLine(); updateCalc(); drawWave();
+  renderFrame(0);
+  updatePlayUI();
+}
+document.getElementById("resetBtn").onclick=()=>reset();
+document.getElementById("playBtn").onclick=()=>startPlayback();
+document.getElementById("stopBtn").onclick=()=>pausePlayback();
+
+buildControls();
+updateSpecLine();
+updateCalc();
+drawWave();
+renderFrame(0);          // 起動時は1コマ目を表示（停止状態）
+updatePlayUI();
+</script>
+</body>
+</html>
 
