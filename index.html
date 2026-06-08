@@ -368,18 +368,19 @@ function subjPhoto(ctx,w,h,t){
   ctx.fillStyle="#3a2350"; hill(ctx,w,h,0.74,0.05,t*0.3);
   ctx.fillStyle="#241634"; hill(ctx,w,h,0.84,0.04,t*0.3+10);
 }
-// --- 題材：ドット絵（汎用ピクセルスプライト）---
+// --- 題材：ドット絵（オリジナルのおばけキャラ：上下に浮遊）---
 const SPRITE = [
- "..R.....R..",
- "...R...R...",
- "..YYYYYYY..",
- ".YY.YYY.YY.",
- "YYYYYYYYYYY",
- "Y.YYYYYYY.Y",
- "Y.Y.....Y.Y",
- "...GG.GG...",
+ "...WWWWW...",
+ ".WWWWWWWWW.",
+ "WWWWWWWWWWW",
+ "WWKKWWWKKWW",
+ "WWKKWWWKKWW",
+ "WWPWWWWWPWW",
+ "WWWWWWWWWWW",
+ "WWWWWWWWWWW",
+ "W.WW.WW.WW.",
 ];
-const PAL={ Y:"#5ddf6e", R:"#ff5a5a", G:"#ffd23f" };
+const PAL={ W:"#f4f4f8", K:"#1a1a2e", P:"#ff9ed8" };
 function subjDot(ctx,w,h,t){
   ctx.fillStyle="#0b1020"; ctx.fillRect(0,0,w,h);
   const cols=SPRITE[0].length, rows=SPRITE.length;
