@@ -58,6 +58,7 @@ canvas#screen{width:100%;aspect-ratio:16/9;display:block;background:#000;border-
 .size-badge{position:absolute;right:16px;bottom:16px;background:rgba(10,12,18,.78);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(4px);color:#fff;border-radius:8px;padding:7px 11px;font-family:var(--mono-font);}
 .size-badge .lab{font-size:10px;color:#9aa3b2;letter-spacing:1px;}
 .size-badge .val{font-size:clamp(18px,3vw,24px);font-weight:700;color:var(--gold);}
+.size-badge .val .bit{display:block;font-size:12px;font-weight:600;color:#9aa3b2;margin-top:2px;}
 .player-ctrl{position:absolute;left:16px;bottom:16px;display:flex;gap:6px;background:rgba(10,12,18,.78);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(4px);border-radius:10px;padding:5px;}
 .pc-btn{width:40px;height:40px;border-radius:8px;border:none;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.55);background:transparent;transition:background .15s ease,color .15s ease;-webkit-appearance:none;}
 .pc-btn.active{background:var(--accent);color:#fff;}
@@ -95,6 +96,7 @@ canvas#wave{width:100%;height:120px;display:block;margin-top:6px;}
 .calc td{padding:5px 2px;vertical-align:top;border-bottom:1px dotted var(--line);}
 .calc td.k{color:var(--ink-soft);white-space:nowrap;width:56px;}
 .calc td.v{text-align:right;font-weight:700;white-space:nowrap;}
+.calc td.v .bit{display:block;font-weight:400;font-size:11px;color:var(--ink-soft);margin-top:1px;}
 .calc .total td{border-top:2px solid var(--ink);border-bottom:none;padding-top:8px;font-size:14px;}
 .calc .total .v{color:var(--accent);}
 .toolbar{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
@@ -298,6 +300,16 @@ function fmtBytes(b){
   if(b < 1024*1024*1024) return (b/1024/1024).toFixed(1)+" MB";
   return (b/1024/1024/1024).toFixed(2)+" GB";
 }
+function fmtBits(b){                       // バイト数→ビット表記（×8、Bと対応するよう1024刻み）
+  const bit=b*8;
+  if(bit < 1024) return bit.toFixed(0)+" bit";
+  if(bit < 1024*1024) return (bit/1024).toFixed(1)+" Kbit";
+  if(bit < 1024*1024*1024) return (bit/1024/1024).toFixed(1)+" Mbit";
+  return (bit/1024/1024/1024).toFixed(2)+" Gbit";
+}
+function fmtBoth(b){                        // B表記とbit表記を2段で表示
+  return `${fmtBytes(b)}<span class="bit">${fmtBits(b)}</span>`;
+}
 function calc(){
   const w=sel.res.w, h=sel.res.h, cb=sel.color.bits, fps=sel.fps.fps, dur=CONFIG.durationSec;
   const qb=sel.quant.bits;
@@ -312,12 +324,12 @@ function calc(){
 function updateCalc(){
   const c = calc();
   document.getElementById("calcTable").innerHTML =
-    `<tr><td class="k">画像1枚</td><td>${c.w}×${c.h}×${c.cb}bit ÷8</td><td class="v">${fmtBytes(c.perFrameBytes)}</td></tr>`+
-    `<tr><td class="k">動画</td><td>1枚 ×${c.fps}コマ ×${c.dur}秒</td><td class="v">${fmtBytes(c.videoBytes)}</td></tr>`+
-    `<tr><td class="k">音</td><td>${(sel.rate.hz/1000)}k ×${c.qb}bit ×${c.dur}秒 ÷8</td><td class="v">${fmtBytes(c.audioBytes)}</td></tr>`+
-    `<tr><td class="k">文字</td><td>${c.chars}文字 ×${CONFIG.text.perCharBits}bit ÷8</td><td class="v">${fmtBytes(c.textBytes)}</td></tr>`+
-    `<tr class="total"><td class="k">合計</td><td>映像＋音＋文字</td><td class="v">${fmtBytes(c.total)}</td></tr>`;
-  document.getElementById("badgeSize").textContent = fmtBytes(c.total);
+    `<tr><td class="k">画像1枚</td><td>${c.w}×${c.h}×${c.cb}bit ÷8</td><td class="v">${fmtBoth(c.perFrameBytes)}</td></tr>`+
+    `<tr><td class="k">動画</td><td>1枚 ×${c.fps}コマ ×${c.dur}秒</td><td class="v">${fmtBoth(c.videoBytes)}</td></tr>`+
+    `<tr><td class="k">音</td><td>${(sel.rate.hz/1000)}k ×${c.qb}bit ×${c.dur}秒 ÷8</td><td class="v">${fmtBoth(c.audioBytes)}</td></tr>`+
+    `<tr><td class="k">文字</td><td>${c.chars}文字 ×${CONFIG.text.perCharBits}bit ÷8</td><td class="v">${fmtBoth(c.textBytes)}</td></tr>`+
+    `<tr class="total"><td class="k">合計</td><td>映像＋音＋文字</td><td class="v">${fmtBoth(c.total)}</td></tr>`;
+  document.getElementById("badgeSize").innerHTML = fmtBoth(c.total);
 }
 function updateSpecLine(){
   document.getElementById("specLine").textContent =
