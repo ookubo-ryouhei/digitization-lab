@@ -295,17 +295,10 @@ function onChange(key){
    データ量の計算と表示
    ========================================================================= */
 function fmtBytes(b){
-  if(b < 1024) return b.toFixed(0)+" B";
-  if(b < 1024*1024) return (b/1024).toFixed(1)+" KB";
-  if(b < 1024*1024*1024) return (b/1024/1024).toFixed(1)+" MB";
-  return (b/1024/1024/1024).toFixed(2)+" GB";
+  return b.toFixed(0)+" B";
 }
-function fmtBits(b){                       // バイト数→ビット表記（×8、Bと対応するよう1024刻み）
-  const bit=b*8;
-  if(bit < 1024) return bit.toFixed(0)+" bit";
-  if(bit < 1024*1024) return (bit/1024).toFixed(1)+" Kbit";
-  if(bit < 1024*1024*1024) return (bit/1024/1024).toFixed(1)+" Mbit";
-  return (bit/1024/1024/1024).toFixed(2)+" Gbit";
+function fmtBits(b){
+  return (b*8).toFixed(0)+" bit";
 }
 function fmtBoth(b){                        // B表記とbit表記を2段で表示
   return `${fmtBytes(b)}<span class="bit">${fmtBits(b)}</span>`;
